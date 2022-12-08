@@ -2,8 +2,16 @@ from flask import Flask
 from flask import request
 from flask import jsonify
 from flask import abort
+from typing import Dict
 
 app = Flask(__name__)
+
+def post_validation(data_obj:Dict):
+    for key,value in data_obj.items():
+        if key == 'friends' or value is None:
+            return True
+    return False
+
 
 books = [
 
@@ -50,7 +58,6 @@ def api_display_id():
     # Check if an ID was provided as part of the URL.
     # If ID is provided, assign it to a variable.
     # If no ID is provided, display an error in the browser.
-
     if request.method == 'GET':
         if 'id' in request.args:
             id = int(request.args['id'])
@@ -58,16 +65,51 @@ def api_display_id():
             return abort(404)
         for book in books:
             if book['id'] == id:
-                book.pop('friends')
-                return jsonify(book)
-            else:
-                return "User not found", 404
+                try:
+                    book.pop('friends')
+                    return jsonify(book), 200
+                except Exception:
+                    return jsonify(book), 200
+        return f'User not found', 404
 
 
 
+@app.route('/api/user', methods=['POST'])
+def api_create_user():
 
 
-    #
+    if request.method == 'POST':
+        if post_validation(request.json):
+            return 'bad req', 400
+
+        user_name = request.json['first_name']
+        user_last = request.json['last_name']
+        p_number = request.json['p_number']
+        location = request.json['location']
+        gender = request.json['gender']
+        rel_status = request.json['rel_status']
+        intersted_in = request.json['intersted_in']
+        hobbis = request.json['hobbis']
+        id = books[-1]['id'] + 1
+
+        validation_user_exits = p_number
+        for book in books:
+            if book['p_number'] == validation_user_exits:
+                return 'user alredy in system',409
+
+        new_obj = {'id': id,
+                   'first_name': user_name,
+                   'last_name': user_last,
+                   'p_number': p_number,
+                   'location': location,
+                   'gender': gender,
+                   'rel_status': rel_status,
+                   'intersted_in': intersted_in,
+                   'hobbis': hobbis}
+
+        books.append(new_obj)
+        return f'new user with id {new_obj["id"]} createdd!', 200
+
     # if request.method == 'PUT':
     #     for book in books:
     #         if book['id'] == id:
@@ -103,35 +145,35 @@ def api_display_id():
 
 
 
-
-@app.route('/api/create/user', methods=['GET', 'POST'])
-def api_create_user():
-    if request.method == 'GET':
-        return jsonify(books), 200
-    if request.method == 'POST':
-        user_name = request.json['first_name']
-        user_last = request.json['last_name']
-        p_number = request.json['p_number']
-        location = request.json['location']
-        gender = request.json['gender']
-        rel_status = request.json['rel_status']
-        intersted_in = request.json['intersted_in']
-        hobbis = request.json['hobbis']
-        friends = request.json['friends']
-        id = books[-1]['id'] + 1
-
-        new_obj = {'id': id,
-                   'first_name': user_name,
-                   'last_name': user_last,
-                   'p_number': p_number,
-                   'location': location,
-                   'gender': gender,
-                   'rel_status': rel_status,
-                   'intersted_in': intersted_in,
-                   'hobbis': hobbis,
-                   'friends': friends}
-        books.append(new_obj)
-        return  f'new user with id {new_obj["id"]} createdd!',200
+#
+# @app.route('/api/create/user', methods=['GET', 'POST'])
+# def api_create_user():
+#     if request.method == 'GET':
+#         return jsonify(books), 200
+#     if request.method == 'POST':
+#         user_name = request.json['first_name']
+#         user_last = request.json['last_name']
+#         p_number = request.json['p_number']
+#         location = request.json['location']
+#         gender = request.json['gender']
+#         rel_status = request.json['rel_status']
+#         intersted_in = request.json['intersted_in']
+#         hobbis = request.json['hobbis']
+#         friends = request.json['friends']
+#         id = books[-1]['id'] + 1
+#
+#         new_obj = {'id': id,
+#                    'first_name': user_name,
+#                    'last_name': user_last,
+#                    'p_number': p_number,
+#                    'location': location,
+#                    'gender': gender,
+#                    'rel_status': rel_status,
+#                    'intersted_in': intersted_in,
+#                    'hobbis': hobbis,
+#                    'friends': friends}
+#         books.append(new_obj)
+#         return  f'new user with id {new_obj["id"]} createdd!',200
 
 
 @app.route('/api/delete/user/id', methods=['GET'])
